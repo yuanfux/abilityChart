@@ -21,8 +21,22 @@ class abilityChart extends HTMLElement {
 			if(canvas.getContext){
 				let ctx = canvas.getContext('2d');
 				//ctx.fillRect(295, 295, 5, 5);
-				this.drawPolygon(ctx ,this.width/2, this.height/2, this.width/2, this.numPoint, false);
-				this.drawPolygon(ctx ,this.width/2, this.height/2, this.width/2, this.numPoint, true);
+				//outter frame & layer
+				for(let i = 0 ; i < this.numLayer ; i++){
+					let tempK = [];
+					let coef = 1 - (1/this.numLayer)*i;
+					for(let j = 0 ; j < this.numPoint ; j++){
+						tempK.push(coef);
+					}
+					this.drawPolygon(ctx ,this.width/2, this.height/2, this.width/2, this.numPoint, tempK);
+				}
+				
+				
+
+				//actual chart
+				this.drawPolygon(ctx ,this.width/2, this.height/2, this.width/2, this.numPoint, this.eachVal);
+
+				//center to vertex line
 				this.drawDecorationLine(ctx ,this.width/2, this.height/2, this.width/2, this.numPoint);
 			}
 		}
@@ -39,28 +53,38 @@ class abilityChart extends HTMLElement {
 		}
 	}
 
-	drawPolygon(ctx, x, y, radius, sides, hasPercentage){
+	drawPolygon(ctx, x, y, radius, sides, k){
 		console.log("here");
 		if (sides < 3) return;
 		this.generateAnchorPts(radius, sides);
 		ctx.save();
 		ctx.beginPath();
 		ctx.translate(x,y);
-		if(!hasPercentage){
-			ctx.moveTo(this.anchorPts[0][0], this.anchorPts[0][1]);
+		if(!k){
+			k = [];
+			for(let i = 0 ; i < sides ; i++){
+				k.push(1);
+			}
+			//ctx.moveTo(this.anchorPts[0][0], this.anchorPts[0][1]);
 		}
-		else{
-			ctx.moveTo(this.eachPoint[0].value/100 * this.anchorPts[0][0], 
-					   this.eachPoint[0].value/100 * this.anchorPts[0][1]);
-		}	
+		console.log("k: " + k);
+		ctx.moveTo(k[0] * this.anchorPts[0][0],
+				   k[0] * this.anchorPts[0][1])
+		// else{
+		// 	ctx.moveTo(this.eachPoint[0].value/100 * this.anchorPts[0][0], 
+		// 			   this.eachPoint[0].value/100 * this.anchorPts[0][1]);
+		// }	
 		for (let i = 1 ; i < this.anchorPts.length ; i++) {
-			if(!hasPercentage){
-				ctx.lineTo(this.anchorPts[i][0],this.anchorPts[i][1]);
-			}
-			else{
-				ctx.lineTo(this.eachPoint[i].value/100 * this.anchorPts[i][0],
-					       this.eachPoint[i].value/100 * this.anchorPts[i][1]);
-			}
+			// if(!hasPercentage){
+			// 	ctx.lineTo(this.anchorPts[i][0],this.anchorPts[i][1]);
+			// }
+			// else{
+			// 	ctx.lineTo(this.eachPoint[i].value/100 * this.anchorPts[i][0],
+			// 		       this.eachPoint[i].value/100 * this.anchorPts[i][1]);
+			// 	console.log(this.eachPoint[i].value/100);
+			// }
+			ctx.lineTo(k[i] * this.anchorPts[i][0],
+				   	   k[i] * this.anchorPts[i][1]);
 			console.log(this.anchorPts[i][0]+ "," + this.anchorPts[i][1]);
 		}
 		ctx.closePath();
@@ -98,7 +122,13 @@ class abilityChart extends HTMLElement {
 		this.width = prop.dimension;
 		this.height = prop.dimension;
 		this.numPoint = prop.numPoint;
-		this.eachPoint = prop.eachPoint;
+		this.numLayer = prop.numLayer;
+		this.eachVal = [];
+		this.eachPoint = prop.eachPoint.map((obj) => {
+			let normalizedVal = (obj.value/100).toFixed(2);
+			this.eachVal.push(normalizedVal);
+			obj.value = normalizedVal;
+		});
 		this.initChart();
 	}
 
@@ -111,6 +141,7 @@ let myAc = document.registerElement("ability-chart", abilityChart);
 let myA = new myAc;
 myA.properties={ dimension: 300,
 				 numPoint: 6,
+				 numLayer:3,
 				 eachPoint:[{key:"Math", value:85},
 				 			{key:"Physics", value:30},
 				 			{key:"English", value:55},
