@@ -11,8 +11,7 @@ class abilityChart extends HTMLElement {
 	}
 
 	initChart(){
-		console.log("inside init" + this.width);
-		if(this.width && this.height && this.numPoint && this.eachPoint){
+		if(this.width && this.height && this.numPoint){
 			
 
 			this.innerHTML = `
@@ -28,16 +27,16 @@ class abilityChart extends HTMLElement {
 					for(let j = 0 ; j < this.numPoint ; j++){
 						tempK.push(coef);
 					}
-					this.drawPolygon(ctx ,this.width/2, this.height/2, this.width/2, this.numPoint, tempK);
+					this.drawPolygon(ctx ,this.width/2, this.height/2, 0.85*this.width/2, this.numPoint, tempK);
 				}
 				
 				
 
 				//actual chart
-				this.drawPolygon(ctx ,this.width/2, this.height/2, this.width/2, this.numPoint, this.eachVal);
+				this.drawPolygon(ctx ,this.width/2, this.height/2, 0.85*this.width/2, this.numPoint, this.eachVal);
 
 				//center to vertex line
-				this.drawDecorationLine(ctx ,this.width/2, this.height/2, this.width/2, this.numPoint);
+				this.drawDecorationLine(ctx ,this.width/2, this.height/2, 0.85*this.width/2, this.numPoint);
 			}
 		}
 	}
@@ -54,7 +53,6 @@ class abilityChart extends HTMLElement {
 	}
 
 	drawPolygon(ctx, x, y, radius, sides, k){
-		console.log("here");
 		if (sides < 3) return;
 		this.generateAnchorPts(radius, sides);
 		ctx.save();
@@ -67,7 +65,6 @@ class abilityChart extends HTMLElement {
 			}
 			//ctx.moveTo(this.anchorPts[0][0], this.anchorPts[0][1]);
 		}
-		console.log("k: " + k);
 		ctx.moveTo(k[0] * this.anchorPts[0][0],
 				   k[0] * this.anchorPts[0][1])
 		// else{
@@ -87,6 +84,7 @@ class abilityChart extends HTMLElement {
 				   	   k[i] * this.anchorPts[i][1]);
 			console.log(this.anchorPts[i][0]+ "," + this.anchorPts[i][1]);
 		}
+		console.log("--------");
 		ctx.closePath();
 		ctx.stroke();
 		ctx.restore();
@@ -97,6 +95,26 @@ class abilityChart extends HTMLElement {
 		this.generateAnchorPts(radius, sides);
 		for(let i = 0 ; i < this.anchorPts.length ; i++){
 			this.drawLine(ctx, x, y, this.anchorPts[i][0], this.anchorPts[i][1]);
+			let alignment = "start";
+			let maxWidth = this.width;
+			if(i == 0 || ((this.numPoint%2 == 0) && (i == (this.numPoint-2)/2 + 1))){
+				alignment = "center";
+			}
+			else if(i > (this.numPoint-2)/2 + 1){
+				alignment = "end";
+				maxWidth = this.width/2 + this.anchorPts[i][0];
+			}
+			else{
+				maxWidth = this.width/2 - this.anchorPts[i][0];
+			}
+
+			if(this.anchorPts[i][1] > 0.0000001){
+				alignment += "Top";
+			}
+			else if(this.anchorPts[i][1] < -0.0000001){
+				alignment += "Bot";
+			}
+			this.drawText(ctx, this.eachLabel[i], "17px Arial", alignment, x, y, this.anchorPts[i][0], this.anchorPts[i][1], maxWidth);
 		}
 	}
 
@@ -107,6 +125,32 @@ class abilityChart extends HTMLElement {
 		ctx.moveTo(0, 0);
 		ctx.lineTo(x1, y1);
 		ctx.stroke();
+		ctx.restore();
+	}
+
+	drawText(ctx, text, font, alignment, x0, y0, x1, y1,maxWidth){
+		ctx.save();
+		ctx.font = font;
+		if(alignment.indexOf("Top") >= 0){
+			ctx.textBaseline = "top";
+		}
+		else if(alignment.indexOf("Bot") >= 0){
+			ctx.textBaseline = "bottom";
+		}
+		else{
+			ctx.textBaseline = "middle";
+		}
+		if(alignment.indexOf("center") >= 0){
+			ctx.textAlign = "center";
+		}
+		else if(alignment.indexOf("end") >= 0){
+			ctx.textAlign = "end";
+		}
+		else if(alignment.indexOf("start") >= 0){
+			ctx.textAlign = "start";
+		}
+		ctx.translate(x0, y0);
+		ctx.fillText(text, x1, y1, maxWidth);
 		ctx.restore();
 	}
 
@@ -124,10 +168,11 @@ class abilityChart extends HTMLElement {
 		this.numPoint = prop.numPoint;
 		this.numLayer = prop.numLayer;
 		this.eachVal = [];
-		this.eachPoint = prop.eachPoint.map((obj) => {
+		this.eachLabel = [];
+		prop.eachPoint.map((obj) => {
 			let normalizedVal = (obj.value/100).toFixed(2);
 			this.eachVal.push(normalizedVal);
-			obj.value = normalizedVal;
+			this.eachLabel.push(obj.key);
 		});
 		this.initChart();
 	}
@@ -147,7 +192,8 @@ myA.properties={ dimension: 300,
 				 			{key:"English", value:55},
 				 			{key:"Chemistry", value:100},
 				 			{key:"Chinese", value:10},
-				 			{key:"cs", value:100}]
+				 			{key:"CS", value:100}
+				 			]
 				};
 
 document.querySelector('#abilityChart').appendChild(myA);
