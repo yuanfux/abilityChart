@@ -1,25 +1,21 @@
 "use strict";
 
-class abilityChart extends HTMLElement {
+class AbilityChart extends HTMLElement {
 	
 	constructor(){
 		super();
-	}
-
-	createdCallback(){
-
+		this.initData();
 	}
 
 	initChart(){
 		if(this.width && this.height && this.numPoint){
-			
 
 			this.innerHTML = `
 			<canvas width=${this.width} height=${this.height}></canvas>`;
 			let canvas = this.querySelector('canvas');
 			if(canvas.getContext){
 				let ctx = canvas.getContext('2d');
-				//ctx.fillRect(295, 295, 5, 5);
+
 				//outter frame & layer
 				for(let i = 0 ; i < this.numLayer ; i++){
 					let tempK = [];
@@ -27,16 +23,15 @@ class abilityChart extends HTMLElement {
 					for(let j = 0 ; j < this.numPoint ; j++){
 						tempK.push(coef);
 					}
-					this.drawPolygon(ctx ,this.width/2, this.height/2, 0.85*this.width/2, this.numPoint, tempK);
+					this.drawPolygon(ctx ,this.width/2, this.height/2, 0.85*this.width/2, this.numPoint, tempK, this.eachLayerStyle[i][0], this.eachLayerStyle[i][1], this.eachLayerStyle[i][2]);
 				}
-				
-				
-
-				//actual chart
-				this.drawPolygon(ctx ,this.width/2, this.height/2, 0.85*this.width/2, this.numPoint, this.eachVal);
 
 				//center to vertex line
 				this.drawDecorationLine(ctx ,this.width/2, this.height/2, 0.85*this.width/2, this.numPoint);
+
+					//actual chart
+				this.drawPolygon(ctx ,this.width/2, this.height/2, 0.85*this.width/2, this.numPoint, this.eachVal, this.fillColor, this.borderWidth, this.borderColor, 0.5);
+
 			}
 		}
 	}
@@ -52,7 +47,7 @@ class abilityChart extends HTMLElement {
 		}
 	}
 
-	drawPolygon(ctx, x, y, radius, sides, k){
+	drawPolygon(ctx, x, y, radius, sides, k, fillColor, borderWidth, borderColor, alpha){
 		if (sides < 3) return;
 		this.generateAnchorPts(radius, sides);
 		ctx.save();
@@ -86,6 +81,22 @@ class abilityChart extends HTMLElement {
 		}
 		console.log("--------");
 		ctx.closePath();
+
+		if(fillColor){
+			ctx.fillStyle = fillColor;
+
+			if(alpha)
+			ctx.globalAlpha = alpha;
+
+			ctx.fill();
+		}
+
+		if(borderWidth)
+		ctx.lineWidth = borderWidth;
+
+		if(borderColor)
+		ctx.strokeStyle = borderColor;
+
 		ctx.stroke();
 		ctx.restore();
 	}
@@ -94,7 +105,7 @@ class abilityChart extends HTMLElement {
 		if (sides < 3) return;
 		this.generateAnchorPts(radius, sides);
 		for(let i = 0 ; i < this.anchorPts.length ; i++){
-			this.drawLine(ctx, x, y, this.anchorPts[i][0], this.anchorPts[i][1]);
+			this.drawLine(ctx, x, y, this.anchorPts[i][0], this.anchorPts[i][1], this.decorLineWidth, this.decorLineColor);
 			let alignment = "start";
 			let maxWidth = this.width;
 			if(i == 0 || ((this.numPoint%2 == 0) && (i == (this.numPoint-2)/2 + 1))){
@@ -114,23 +125,32 @@ class abilityChart extends HTMLElement {
 			else if(this.anchorPts[i][1] < -0.0000001){
 				alignment += "Bot";
 			}
-			this.drawText(ctx, this.eachLabel[i], "17px Arial", alignment, x, y, this.anchorPts[i][0], this.anchorPts[i][1], maxWidth);
+			this.drawText(ctx, this.eachLabel[i], this.labelFont, this.eachLabelColor[i], alignment, x, y, this.anchorPts[i][0], this.anchorPts[i][1], maxWidth);
 		}
 	}
 
-	drawLine(ctx, x0, y0, x1, y1){
+	drawLine(ctx, x0, y0, x1, y1, decorLineWidth, decorLineColor){
 		ctx.save();
 		ctx.beginPath();
 		ctx.translate(x0, y0);
 		ctx.moveTo(0, 0);
 		ctx.lineTo(x1, y1);
+		ctx.lineWidth = decorLineWidth;
+		ctx.strokeStyle = decorLineColor;
 		ctx.stroke();
 		ctx.restore();
 	}
 
-	drawText(ctx, text, font, alignment, x0, y0, x1, y1,maxWidth){
+	drawText(ctx, text, font, fillStyle, alignment, x0, y0, x1, y1,maxWidth){
 		ctx.save();
+		if(font)
 		ctx.font = font;
+
+		if(fillStyle)
+		ctx.fillStyle = fillStyle;
+
+
+
 		if(alignment.indexOf("Top") >= 0){
 			ctx.textBaseline = "top";
 		}
@@ -140,6 +160,7 @@ class abilityChart extends HTMLElement {
 		else{
 			ctx.textBaseline = "middle";
 		}
+
 		if(alignment.indexOf("center") >= 0){
 			ctx.textAlign = "center";
 		}
@@ -154,46 +175,63 @@ class abilityChart extends HTMLElement {
 		ctx.restore();
 	}
 
-	attachedCallback(){
-
+	connectedCallback(){
+		console.log("wtf");
 	}
 
-	detachedCallback() {
-
-	}
-
-	set properties(prop){
+	initData(){
+		let prop = JSON.parse(this.getAttribute("prop"));
+		console.log("prop: "+prop);
 		this.width = prop.dimension;
 		this.height = prop.dimension;
-		this.numPoint = prop.numPoint;
 		this.numLayer = prop.numLayer;
+		this.labelFont = prop.font;
+		this.fillColor = prop.fillColor;
+		this.borderWidth = prop.borderWidth;
+		this.borderColor = prop.borderColor;
+		this.decorLineWidth = prop.decorLineWidth;
+		this.decorLineColor = prop.decorLineColor;
 		this.eachVal = [];
 		this.eachLabel = [];
+		this.eachLabelColor = [];
+		this.eachLayerStyle = [];
+		prop.eachLayerStyle.map((obj) => {
+			let tempStyle = [];
+			tempStyle.push(obj.fillColor);
+			tempStyle.push(obj.borderWidth);
+			tempStyle.push(obj.borderColor);
+			this.eachLayerStyle.push(tempStyle);
+		});
+
 		prop.eachPoint.map((obj) => {
 			let normalizedVal = (obj.value/100).toFixed(2);
 			this.eachVal.push(normalizedVal);
 			this.eachLabel.push(obj.key);
+			this.eachLabelColor.push(obj.labelColor);
 		});
-		this.initChart();
+		this.numPoint = this.eachVal.length;
+		this.initChart();	
 	}
 
 	attributeChangedCallback(attr, oldVal, newVal){
+
 	}
 
 }
 
-let myAc = document.registerElement("ability-chart", abilityChart);
-let myA = new myAc;
-myA.properties={ dimension: 300,
-				 numPoint: 6,
-				 numLayer:3,
-				 eachPoint:[{key:"Math", value:85},
-				 			{key:"Physics", value:30},
-				 			{key:"English", value:55},
-				 			{key:"Chemistry", value:100},
-				 			{key:"Chinese", value:10},
-				 			{key:"CS", value:100}
-				 			]
-				};
+// let myAc = document.registerElement("ability-chart", abilityChart);
+// let myA = new myAc;
+// myA.properties={ dimension: 300,
+// 				 numPoint: 6,
+// 				 numLayer:3,
+// 				 eachPoint:[{key:"Math", value:85},
+// 				 			{key:"Physics", value:30},
+// 				 			{key:"English", value:55},
+// 				 			{key:"Chemistry", value:100},
+// 				 			{key:"Chinese", value:10},
+// 				 			{key:"CS", value:100}
+// 				 			]
+// 				};
 
-document.querySelector('#abilityChart').appendChild(myA);
+// document.querySelector('#abilityChart').appendChild(myA);
+customElements.define('ability-chart', AbilityChart);
