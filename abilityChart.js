@@ -13,6 +13,9 @@ class AbilityChart extends HTMLElement {
 			this.innerHTML = `
 			<canvas width=${this.width} height=${this.height}></canvas>`;
 			let canvas = this.querySelector('canvas');
+			//this.canvas = canvas;
+			canvas.addEventListener("mousemove", (e) => {
+				this.handleEvent(e, canvas)});
 			if(canvas.getContext){
 				let ctx = canvas.getContext('2d');
 
@@ -23,14 +26,14 @@ class AbilityChart extends HTMLElement {
 					for(let j = 0 ; j < this.numPoint ; j++){
 						tempK.push(coef);
 					}
-					this.drawPolygon(ctx ,this.width/2, this.height/2, 0.85*this.width/2, this.numPoint, tempK, this.eachLayerStyle[i][0], this.eachLayerStyle[i][1], this.eachLayerStyle[i][2]);
+					this.drawPolygon(ctx ,this.width/2, this.height/2, this.chartPortion*this.width/2, this.numPoint, tempK, this.eachLayerStyle[i][0], this.frameBorderWidth, this.eachLayerStyle[i][1]);
 				}
 
 				//center to vertex line
-				this.drawDecorationLine(ctx ,this.width/2, this.height/2, 0.85*this.width/2, this.numPoint);
+				this.drawDecorationLine(ctx ,this.width/2, this.height/2, this.chartPortion*this.width/2, this.numPoint);
 
-					//actual chart
-				this.drawPolygon(ctx ,this.width/2, this.height/2, 0.85*this.width/2, this.numPoint, this.eachVal, this.fillColor, this.borderWidth, this.borderColor, 0.5);
+				//actual chart
+				this.drawPolygon(ctx ,this.width/2, this.height/2, this.chartPortion*this.width/2, this.numPoint, this.eachVal, this.fillColor, this.chartBorderWidth, this.borderColor, this.chartAlpha);
 
 			}
 		}
@@ -105,7 +108,7 @@ class AbilityChart extends HTMLElement {
 		if (sides < 3) return;
 		this.generateAnchorPts(radius, sides);
 		for(let i = 0 ; i < this.anchorPts.length ; i++){
-			this.drawLine(ctx, x, y, this.anchorPts[i][0], this.anchorPts[i][1], this.decorLineWidth, this.decorLineColor);
+			this.drawLine(ctx, x, y, this.anchorPts[i][0], this.anchorPts[i][1], this.frameBorderWidth, this.decorLineColor);
 			let alignment = "start";
 			let maxWidth = this.width;
 			if(i == 0 || ((this.numPoint%2 == 0) && (i == (this.numPoint-2)/2 + 1))){
@@ -149,28 +152,43 @@ class AbilityChart extends HTMLElement {
 		if(fillStyle)
 		ctx.fillStyle = fillStyle;
 
-
-
+		let rectWidth = Math.min(maxWidth, ctx.measureText(text).width);
+		let rectHeight = ctx.measureText('gM').width;//hack here
+		let upperLeft = [x1, y1];
 		if(alignment.indexOf("Top") >= 0){
 			ctx.textBaseline = "top";
 		}
 		else if(alignment.indexOf("Bot") >= 0){
 			ctx.textBaseline = "bottom";
+			upperLeft[1] -= rectHeight;
 		}
 		else{
 			ctx.textBaseline = "middle";
+			upperLeft[1] += rectHeight/2;
 		}
 
 		if(alignment.indexOf("center") >= 0){
 			ctx.textAlign = "center";
+			upperLeft[0] -= rectWidth/2;
 		}
 		else if(alignment.indexOf("end") >= 0){
 			ctx.textAlign = "end";
+			upperLeft[0] -= rectWidth;
 		}
 		else if(alignment.indexOf("start") >= 0){
 			ctx.textAlign = "start";
 		}
 		ctx.translate(x0, y0);
+		//ctx.fillRect(upperLeft[0], upperLeft[1], rectWidth, rectHeight);
+		if(!this.rectAreas){
+			this.rectAreas = [];
+		}
+		let curRect = {};
+		curRect.upperLeft = upperLeft;
+		curRect.width = rectWidth;
+		curRect.height = rectHeight;
+		curRect.label = text;
+		this.rectAreas.push(curRect);
 		ctx.fillText(text, x1, y1, maxWidth);
 		ctx.restore();
 	}
@@ -187,10 +205,12 @@ class AbilityChart extends HTMLElement {
 		this.numLayer = prop.numLayer;
 		this.labelFont = prop.font;
 		this.fillColor = prop.fillColor;
-		this.borderWidth = prop.borderWidth;
+		this.frameBorderWidth = prop.frameBorderWidth;
+		this.chartBorderWidth = prop.chartBorderWidth;
 		this.borderColor = prop.borderColor;
-		this.decorLineWidth = prop.decorLineWidth;
 		this.decorLineColor = prop.decorLineColor;
+		this.chartPortion = prop.chartPortion;
+		this.chartAlpha = prop.chartAlpha;
 		this.eachVal = [];
 		this.eachLabel = [];
 		this.eachLabelColor = [];
@@ -198,7 +218,6 @@ class AbilityChart extends HTMLElement {
 		prop.eachLayerStyle.map((obj) => {
 			let tempStyle = [];
 			tempStyle.push(obj.fillColor);
-			tempStyle.push(obj.borderWidth);
 			tempStyle.push(obj.borderColor);
 			this.eachLayerStyle.push(tempStyle);
 		});
@@ -215,6 +234,30 @@ class AbilityChart extends HTMLElement {
 
 	attributeChangedCallback(attr, oldVal, newVal){
 
+	}
+
+	handleEvent(e, canvas){
+
+		//get relative coordinates
+		let x = e.pageX - canvas.offsetLeft;
+    	let y = e.pageY - canvas.offsetTop;
+    	//normalize the coordinates
+    	x -= this.width/2;
+    	y -= this.height/2;
+
+    	//console.log("x:" + x +", y:" + y);
+
+
+    	for(let i = 0 ; i < this.rectAreas.length ; i++){
+    		let curRect = this.rectAreas[i];
+    		let xStart = curRect.upperLeft[0];
+    		let xEnd = curRect.upperLeft[0] + curRect.width;
+    		let yStart = curRect.upperLeft[1];
+    		let yEnd = curRect.upperLeft[1] + curRect.height;
+    		if( xStart <= x && x <= xEnd && yStart <= y && y <= yEnd){
+    			console.log(curRect.label);
+    		}
+    	}
 	}
 
 }
