@@ -50,7 +50,6 @@ class AbilityChart extends HTMLElement {
 
 
 	initChart(){
-		console.log("init chart");
 		if(this.dimension && this.dimension && this.numPoint){
 			this.innerHTML = `
 			<canvas width=${this.dimension} height=${this.dimension}></canvas>`;
@@ -210,7 +209,7 @@ class AbilityChart extends HTMLElement {
 	attributeChangedCallback(attr, oldVal, newVal){
 		//console.log('[my component] attribute', attr, 'changed from', oldVal, 'to', newVal);
 		this.reCompute = true;
-		this.initData();
+		this.buildChart();
 	}
 
 }
