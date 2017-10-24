@@ -208,4 +208,4 @@ class AbilityChart extends HTMLElement {
 	}
 
 }
-customElements.define('ability-chart', AbilityChart);
+window.customElements.define('ability-chart', AbilityChart);
