@@ -1,7 +1,6 @@
 "use strict";
 
 class AbilityChart extends HTMLElement {
-	
 
 	static get observedAttributes() {return ['prop']; }
 
@@ -45,7 +44,6 @@ class AbilityChart extends HTMLElement {
 			this.eachLabel.push(obj.key);
 		});
 		this.numPoint = this.eachVal.length;
-		//this.initChart();	
 	}
 
 
@@ -76,6 +74,7 @@ class AbilityChart extends HTMLElement {
 		this.drawDecorationLine(ctx ,this.dimension/2, this.dimension/2, this.chartPortion*this.dimension/2, this.numPoint);
 		//actual chart
 		this.drawPolygon(ctx ,this.dimension/2, this.dimension/2, this.chartPortion*this.dimension/2, this.numPoint, this.eachVal, this.fillColor, this.chartBorderWidth, this.borderColor, this.chartAlpha);
+		//recompute should've finished by this time
 		this.reCompute = false;
 	}
 
@@ -203,11 +202,7 @@ class AbilityChart extends HTMLElement {
 		ctx.restore();
 	}
 
-	connectedCallback(){
-	}
-
 	attributeChangedCallback(attr, oldVal, newVal){
-		//console.log('[my component] attribute', attr, 'changed from', oldVal, 'to', newVal);
 		this.reCompute = true;
 		this.buildChart();
 	}
