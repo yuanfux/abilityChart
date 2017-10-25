@@ -26,13 +26,13 @@ class AbilityChart extends Polymer.Element {
 		this.buildChart();
 	}
 	buildChart(){
-		console.log("buildChart");
+		// console.log("buildChart");
 		this.initData();
 		this.initChart();
 	}
 
 	initData(){
-		console.log("initData");
+		// console.log("initData");
 		let prop = JSON.parse(this.getAttribute("prop"));
 		this.dimension = prop.dimension? prop.dimension : 300;
 		this.numLayer = prop.numLayer? prop.numLayer : 1;
@@ -66,7 +66,7 @@ class AbilityChart extends Polymer.Element {
 
 
 	initChart(){
-		console.log("initChart");
+		// console.log("initChart");
 		if(this.dimension && this.dimension && this.numPoint){
 			// this.innerHTML = `
 			// <canvas width=${this.dimension} height=${this.dimension}></canvas>`;
@@ -100,7 +100,7 @@ class AbilityChart extends Polymer.Element {
 	}
 
 	generateAnchorPts(radius, sides){
-		console.log("generateAnchorPts");
+		// console.log("generateAnchorPts");
 		if(!this.anchorPts || this.reCompute){
 			this.anchorPts = [];
 			let eachAngle = ((Math.PI * 2)/sides);
@@ -112,7 +112,7 @@ class AbilityChart extends Polymer.Element {
 	}
 
 	drawPolygon(ctx, x, y, radius, sides, k, fillColor, borderWidth, borderColor, alpha){
-		console.log("drawPolygon");
+		// console.log("drawPolygon");
 		if (sides < 3) return;
 		this.generateAnchorPts(radius, sides);
 		ctx.save();
@@ -152,7 +152,7 @@ class AbilityChart extends Polymer.Element {
 	}
 
 	drawDecorationLine(ctx, x, y, radius, sides){
-		console.log("drawDecorationLine")
+		// console.log("drawDecorationLine");
 		if (sides < 3) return;
 		this.generateAnchorPts(radius, sides);
 		for(let i = 0 ; i < this.anchorPts.length ; i++){
@@ -181,7 +181,7 @@ class AbilityChart extends Polymer.Element {
 	}
 
 	drawLine(ctx, x0, y0, x1, y1, decorLineWidth, decorLineColor){
-		console.log("drawLine")
+		// console.log("drawLine");
 		ctx.save();
 		ctx.beginPath();
 		ctx.translate(x0, y0);
@@ -196,7 +196,7 @@ class AbilityChart extends Polymer.Element {
 	}
 
 	drawText(ctx, text, font, fillStyle, alignment, x0, y0, x1, y1,maxWidth){
-		console.log("drawText")
+		// console.log("drawText");
 		ctx.save();
 		if(font)
 		ctx.font = font;
@@ -230,9 +230,11 @@ class AbilityChart extends Polymer.Element {
 
 	attributeChangedCallback(attr, oldVal, newVal){
 		//super.attributeChangedCallback(attr, oldVal, newVal);
-		console.log(attr+": oldVal: " + oldVal + " newVal: " + newVal);
-		// this.reCompute = true;
-		// this.buildChart();
+		//console.log(attr+": oldVal: " + oldVal + " newVal: " + newVal);
+		if(oldVal && newVal){
+			this.reCompute = true;
+			this.buildChart();
+		}
 	}
 
 }
